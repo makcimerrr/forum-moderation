@@ -105,10 +105,12 @@ func Sign_up(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			formError = append(formError, "This Email Is Already Use !!")
 		}
+		lvaccess := "user"
 
 		if formError == nil {
-			insertUser := "INSERT INTO account_user (username, email, mot_de_passe) VALUES (?, ?, ?)"
-			_, err = db.Exec(insertUser, username, email, hashpass)
+			insertUser := "INSERT INTO account_user (username, email, mot_de_passe, access_level) VALUES (?, ?, ?, ?)"
+			_, err = db.Exec(insertUser, username, email, hashpass,lvaccess)
+
 			admin := false
 
 			err := CreateAndSetSessionCookies(w, username,admin)
@@ -160,7 +162,7 @@ func Log_in(w http.ResponseWriter, r *http.Request) {
 		var username string
 		var admin string
 		var Admin = false
-		err = db.QueryRow("SELECT username, email, mot_de_passe , access_level FROM account_user WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword,&admin)
+		err = db.QueryRow("SELECT username, email, mot_de_passe ,access_level FROM account_user WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword,&admin)
 		
 		if err != nil {
 			formError = append(formError, "Email Doesn't exist.")
@@ -295,7 +297,8 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		if err != nil {
 			return err
 		}
-
+		fmt.Println("THIIIS ISSSS")
+		fmt.Println(username)
 		// Créer un cookie contenant le nom d'utilisateur
 		userCookie := http.Cookie{
 			Name:     "username",
