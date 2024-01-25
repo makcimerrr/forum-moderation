@@ -39,8 +39,54 @@
             </select><br>
             <input type="submit" value="Filter">
         </form>
+        {{ if .Admin }}
+        <form action="/DeleteItem" method="post">
+            <label for="itemType">Select item type to delete:</label>
+            <select id="itemType" name="itemType">
+                <option value="post">Post</option>
+                <option value="comment">Comment</option>
+                <option value="filter">Filter</option>
+            </select><br>
+        
+            <label for="itemID">ID of the item to delete:</label>
+            <input type="text" id="itemID" name="itemID"><br>
+        
+            <!-- Bouton de validation -->
+            <button type="submit">Valider</button>
+        </form>
+        <div class="discussion-list">
+           
+            <!-- Boucle pour afficher les discussions avec des liens -->
+
+            {{range .Discussions}}
+            <a href="/discussion/{{.ID}}">
+                <div class="discussion">
+                    <h2>Discussion créée par {{.Username}}</h2>
+                    <p><strong>ID ADMIN :</strong> {{.ID}}</p>
+
+
+                    <p><strong>Titre :</strong> {{.Title}}</p>
+                    <p><strong>Catégorie :</strong> {{.Category}}</p>
+    
+            </a>
+            <!-- Ajoutez un formulaire pour la case à cocher -->
+            <form action="/like/{{.ID}}" method="post">
+                <input type="checkbox" name="like" value="{{.ID}}" {{if .Liked}}checked{{end}} disabled>
+                <input type="submit" value="Like">
+                <p><strong>👍</strong> {{.NumberLike}}</p>
+            </form>
+
+            <form action="/dislike/{{.ID}}" method="post">
+                <input type="checkbox" name="dislike" value="{{.ID}}" {{if .Disliked}}checked{{end}} disabled>
+                <input type="submit" value="Dislike">
+                <p><strong>👎</strong> {{.NumberDislike}}</p>
+            </form>
+        </div>
+        {{end}}
+    {{ else }}
 
         <div class="discussion-list">
+           
             <!-- Boucle pour afficher les discussions avec des liens -->
 
             {{range .Discussions}}
@@ -68,6 +114,9 @@
             </form>
         </div>
         {{end}}
+{{end}}
+
+       
     </main>
 </body>
 

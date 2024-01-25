@@ -91,6 +91,7 @@ func main() {
 	http.HandleFunc("/home", forum.Home)
 	http.HandleFunc("/create_discussion", forum.CreateDiscussion)
 	http.HandleFunc("/discussion/", forum.ShowDiscussion)
+	http.HandleFunc("/DeleteItem", forum.DeleteItem)
 	http.HandleFunc("/add_message/", forum.AddMessage)
 	http.HandleFunc("/like/", forum.LikeDiscussion)
 	http.HandleFunc("/dislike/", forum.DislikeDiscussion)
