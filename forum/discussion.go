@@ -171,12 +171,14 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Effectuez une autre requête SQL pour récupérer les commentaires associés à cette discussion
-	rows, err := db.Query("SELECT username, message FROM comments WHERE discussion_id = ?", discussionIDInt)
+	rows, err := db.Query("SELECT Field4, username, message FROM comments WHERE discussion_id = ?", discussionIDInt)
 	if err != nil {
 		http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
+
+
 
 	// Créez une structure de données pour stocker les détails de la discussion et les commentaires
 	data := struct {
@@ -187,6 +189,7 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 		Image    string
 		Filter   *string
 		Comments []struct {
+			ID int
 			Username string
 			Message  string
 		}
@@ -215,10 +218,13 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 	// Parcourez les commentaires et ajoutez-les à la structure de données
 	for rows.Next() {
 		var comment struct {
+			ID int
 			Username string
 			Message  string
 		}
-		if err := rows.Scan(&comment.Username, &comment.Message); err != nil {
+		fmt.Println(comment.ID)
+
+		if err := rows.Scan(&comment.ID, &comment.Username, &comment.Message); err != nil {
 			http.Error(w, "Error scanning comments", http.StatusInternalServerError)
 			return
 		}

@@ -114,8 +114,8 @@ func Sign_up(w http.ResponseWriter, r *http.Request) {
 			admin := false
 
 			err := CreateAndSetSessionCookies(w, username,admin)
-			fmt.Println(username)
 
+		
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -253,7 +253,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		}
 
 		// Insérer la nouvelle entrée dans la base de données
-		_, err = db.Exec("INSERT INTO token_user (username, sessionToken, access_level) VALUES (?, ?, ?)", username, sessionToken, accessLevel)
+		_, err = db.Exec("INSERT INTO token_user (username, sessionToken, access_level) VALUES (?, ?, NULL)", username, sessionToken)
 		if err != nil {
 			return err
 		}
@@ -297,8 +297,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		if err != nil {
 			return err
 		}
-		fmt.Println("THIIIS ISSSS")
-		fmt.Println(username)
+		
 		// Créer un cookie contenant le nom d'utilisateur
 		userCookie := http.Cookie{
 			Name:     "username",
@@ -316,6 +315,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 			HttpOnly: true,
 		}
 		http.SetCookie(w, &sessionCookie)
+
 
 		// Créer un cookie contenant le niveau d'accès
 		accessLevelCookie := http.Cookie{
@@ -377,11 +377,20 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	var username string
 	var admin bool
 
-	adminCookie, err := r.Cookie("admin")
+	adminCookie, err := r.Cookie("access_level")
 	if err == nil {
  	   adminStr := adminCookie.Value
  	   admin, _ = strconv.ParseBool(adminStr)
+		if adminStr == "admin" {
+			admin = true
+		} else {
+			admin = false 
+	
+		}
 	}
+
+
+	
 
 	if err == nil {
 		username = usernameCookie.Value
@@ -406,6 +415,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 
 	// Récupérer les catégories pour chaque discussion
 	for i, discussion := range discussions {
@@ -453,6 +463,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		discussions[i].NumberDislike = numberDislike
 	}
 
+
 	// Créer une structure de données pour passer les informations au modèle
 	data := struct {
 		Username    string
@@ -475,4 +486,101 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func DeleteItem(w http.ResponseWriter, r *http.Request) {
+    postIDStr := r.FormValue("itemID")
+    itemType := r.FormValue("itemType")
+	fmt.Println(itemType)
 
+    if itemType == "filter" {
+        err := deleteFilterFromDB(postIDStr)
+        if err != nil {
+            http.Error(w, "Error deleting filter", http.StatusInternalServerError)
+            return
+		}
+    } else {
+
+	
+
+    postID, err := strconv.Atoi(postIDStr)
+	fmt.Println(postID)
+
+    if err != nil {
+        http.Error(w, "Invalid post ID", http.StatusBadRequest)
+        return
+    }
+
+     if itemType == "post" {
+		fmt.Println(postID)
+        err = deletePostFromDB(postID)
+        if err != nil {
+            http.Error(w, "Error deleting post", http.StatusInternalServerError)
+            return
+        }
+    }
+
+    if itemType == "comment" {
+        err = deleteCommentFromDB(postID)
+        if err != nil {
+            http.Error(w, "Error deleting comment", http.StatusInternalServerError)
+            return
+        }
+    }
+
+	}
+    // Rediriger l'utilisateur vers la page d'accueil ou une autre page appropriée
+    http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func deletePostFromDB(postID int) error {
+    // Ouvrir la connexion à la base de données
+    db, err := sql.Open("sqlite", "database/data.db")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    // Exécuter la requête SQL pour supprimer le post de la base de données
+    _, err = db.Exec("DELETE FROM discussion_user WHERE id = ?", postID)
+    if err != nil {
+        return err
+    }
+
+    // Si tout s'est bien passé, retourner nil (pas d'erreur)
+    return nil
+}
+
+func deleteCommentFromDB(commentID int) error {
+    // Ouvrir la connexion à la base de données
+    db, err := sql.Open("sqlite", "database/data.db")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    // Exécuter la requête SQL pour supprimer le commentaire de la base de données
+    _, err = db.Exec("DELETE FROM comments WHERE id = ?", commentID)
+    if err != nil {
+        return err
+    }
+
+    // Si tout s'est bien passé, retourner nil (pas d'erreur)
+    return nil
+}
+
+func deleteFilterFromDB(filterID string) error {
+    // Ouvrir la connexion à la base de données
+    db, err := sql.Open("sqlite", "database/data.db")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    // Exécuter la requête SQL pour supprimer le filtre de la base de données
+    _, err = db.Exec("DELETE FROM discussion_user WHERE filter = ?", filterID)
+    if err != nil {
+        return err
+    }
+
+    // Si tout s'est bien passé, retourner nil (pas d'erreur)
+    return nil
+}

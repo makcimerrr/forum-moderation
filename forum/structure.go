@@ -14,6 +14,7 @@ type Discussion struct {
 
 // Ajoutez cette structure pour représenter un message
 type Comment struct {
+	Idmessage int
 	Username string
 	Message  string
 }
