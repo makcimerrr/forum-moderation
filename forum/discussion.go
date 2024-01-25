@@ -171,13 +171,14 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Effectuez une autre requête SQL pour récupérer les commentaires associés à cette discussion
-	rows, err := db.Query("SELECT Field4, username, message FROM comments WHERE discussion_id = ?", discussionIDInt)
+	rows, err := db.Query("SELECT id, username, message FROM comments WHERE discussion_id = ?", discussionIDInt)
 	if err != nil {
 		http.Error(w, "Error fetching comments", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
+	
 
 
 	// Créez une structure de données pour stocker les détails de la discussion et les commentaires
