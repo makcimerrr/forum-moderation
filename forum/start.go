@@ -15,6 +15,8 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
+
+	codeerreur "forum/codeErreur"
 )
 
 func codeErreur(w http.ResponseWriter, r *http.Request, url string, route string, html string) {
@@ -354,14 +356,26 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		//s
 	}
 
+	// Supprimer le cookie "session"
+	access_level, err := r.Cookie("acces_level")
+	if err == nil {
+		access_level.Expires = time.Now().AddDate(0, 0, -1) // Définir une date d'expiration dans le passé pour supprimer le cookie
+		http.SetCookie(w, sessionCookie)
+		//s
+	}
+
 	// Créer un message de notification
 	notification = append(notification, "Déconnexion réussie.")
 
-	// Rediriger vers la page "/home" avec le message de notification
 	http.Redirect(w, r, "/log_in?error="+url.QueryEscape(strings.Join(notification, "; ")), http.StatusSeeOther)
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
+
+	if r.URL.Path != "/home" && r.URL.Path != "/" {
+		codeerreur.CodeErreur(w, r, 404, "Page not found")
+		return
+	}
 
 	// Vérifiez la validité de la session
 	validSession, errMsg := isSessionValid(r)
@@ -372,32 +386,39 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var username string
 	// Récupérer le nom d'utilisateur à partir du cookie "username"
 	usernameCookie, err := r.Cookie("username")
-	var username string
+
+	if err != nil {
+		fmt.Println(err)
+	}else {
+		username = usernameCookie.Value
+	} 
+	
 	var admin bool
+	var isadmin string
 
 	adminCookie, err := r.Cookie("access_level")
-	if err == nil {
- 	   adminStr := adminCookie.Value
- 	   admin, _ = strconv.ParseBool(adminStr)
-		if adminStr == "admin" {
+
+	if err != nil {
+		fmt.Println(err)
+	}else {
+		isadmin = adminCookie.Value
+	}
+
+	if isadmin == "admin" {
 			admin = true
 		} else {
 			admin = false 
 	
 		}
-	}
 
 
-	
-
-	if err == nil {
-		username = usernameCookie.Value
-	}
-
-	var category string
 	var discussions []Discussion
+	var category string
+	/* category = "some_value" */
+	
 
 	category = r.URL.Query().Get(`category`)
 
@@ -427,7 +448,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 	// Récupérer les catégories uniques
 	categories := GetUniqueCategoriesFromDiscussions(discussions)
-
+ 
 	// Pour chaque discussion, vérifiez si l'utilisateur l'a aimée
 	for i := range discussions {
 		liked, err := CheckIfUserLikedDiscussion(username, discussions[i].ID)

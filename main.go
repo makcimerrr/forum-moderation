@@ -100,7 +100,6 @@ func main() {
 	http.HandleFunc("/oauth2callback", facebook.HandleFacebookCallback)
 
 	http.HandleFunc("/", forum.Home)
-	http.HandleFunc("/backtohome", forum.BackToHome)
 	http.HandleFunc("/404", forum.HandleNotFound)
 	http.HandleFunc("/500", forum.HandleServerError)
 	http.HandleFunc("/400", forum.HandleBadRequest)

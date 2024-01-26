@@ -69,4 +69,13 @@ func clearSessionCookies(w http.ResponseWriter) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &clearCookie)
+
+	clearCookie = http.Cookie{
+		Name:     "access_level",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &clearCookie)
 }
