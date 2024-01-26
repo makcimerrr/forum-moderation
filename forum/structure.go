@@ -18,3 +18,22 @@ type Comment struct {
 	Username string
 	Message  string
 }
+
+type Ticket struct {
+	ID            int
+	Sujet         string
+	Message       string
+	Username      string
+	Probleme      string
+	Liked         bool 
+	Disliked      bool
+	NumberLike    int
+	NumberDislike int
+}
+
+// Ajoutez cette structure pour représenter une réponse
+type Response struct {
+	Idmessage int
+	Username string
+	Message  string
+}

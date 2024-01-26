@@ -29,8 +29,8 @@
 
         <a href="/create_discussion" class="boutonaddpost">Add a Post </a> <!-- Bouton pour écrire une discussion -->
 
-        <a href="/create_ticket" class="boutoncreateticket">Create Ticket </a>
-        <!-- Bouton pour demander un ticket admin -->
+        <a href="/create_ticket_modo" class="boutoncreateticket">You want to be Moderator ?</a>
+
 
 
         <form action="/home" method="GET">
@@ -48,6 +48,8 @@
 
         <div id="adminbox">
             {{ if .Admin }}
+            <a href="/create_ticket" class="boutoncreateticket">Create Ticket </a>
+            <!-- Bouton pour demander un ticket admin -->
             <form action="/DeleteItem" method="post">
                 <label for="itemType">Select item type to delete:</label>
                 <select id="itemType" name="itemType">
@@ -62,6 +64,24 @@
                 <!-- Bouton de validation -->
                 <button type="submit">Valider</button>
             </form>
+
+            <form action="/PromoteOrDemote" method="post">
+                <label for="itemType">Select action :</label>
+                <select id="itemType" name="itemType">
+                    <option value="promote">Promote</option>
+                    <option value="demote">Demote</option>
+                </select><br>
+
+                <label for="itemID">ID of the user:</label><br>
+                <input type="text" id="userID" name="userID"><br>
+
+                <!-- Bouton de validation -->
+                <button type="submit">Valider</button>
+            </form>
+
+            <br><br>
+
+            <a href="/tickets" class="boutoncreateticket">See All Tickets</a>
         </div>
 
 
@@ -93,6 +113,7 @@
             </form>
         </div>
         {{end}}
+
         {{ else }}
 
         <div class="discussion-list">

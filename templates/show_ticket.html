@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/static/css/show_discussion.css" />
+    <title>Report Details</title>
+</head>
+
+<body>
+    <h1>Report Details</h1>
+    {{if .Modo}}
+    <h3><strong>User ID:</strong>{{.UserID}}</h3>
+    {{end}}
+    <p><strong>Username:</strong> {{.Username}}</p>
+
+    <p><strong>Sujet:</strong> {{.Sujet}}</p>
+    <div class="message">
+        <p><strong>Message:</strong> {{.Message}}</p>
+    </div>
+    <p id="raison"><strong>Problèmes :</strong> {{ .Raison}}</p>
+
+    <!-- discussion.html -->
+    <div id="messages">
+        <!-- Les messages seront affichés ici -->
+        {{range .Responses}}
+        <div class="message">
+            <p>{{ .ID}}</p>
+            <p><strong>{{.Username}}</strong></p>
+            <p>{{.Message}}</p>
+
+            <!-- Bouton like pour aimer les commentaires -->
+            <form action="" method="post">
+                <input type="checkbox" name="like" value="" disabled />
+                <input type="submit" value="Like" />
+            </form>
+        </div>
+        {{end}}
+    </div>
+
+    <h2>Add a Comment</h2>
+    <form action="/add_response/{{.ID}}" method="POST">
+        <textarea name="message" rows="4" cols="50"></textarea>
+        <br />
+        <input type="submit" value="Add Response" />
+    </form>
+
+    <div class="back-to-home">
+        <a href="/">Back to Home</a>
+    </div>
+</body>
+
+</html>

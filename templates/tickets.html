@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/static/css/home.css">
+    <title>AllTickets</title>
+</head>
+
+<body>
+    <header>
+        <a href="/">Forum</a>
+        {{if .Username}}
+        <a>Welcome {{.Username}}</a>
+        <a href="/logout">Logout</a>
+        {{else}}
+        <a>You're not connected</a>
+        <a href="/logorsign">Log or Sign</a>
+        {{end}}
+
+    </header>
+    <main>
+        {{range .Tickets}}
+        <a href="/ticket/{{.ID}}">
+            <div class="discussion">
+                <h2>Discussion créée par {{.Username}}</h2>
+                <p><strong>ID ADMIN :</strong> {{.ID}}</p>
+
+
+                <p><strong>Sujet :</strong> {{.Sujet}}</p>
+                <p><strong>Probleme :</strong> {{.Probleme}}</p>
+        </a>
+        </div>
+        {{end}}
+    </main>
+</body>
+
+</html>

@@ -364,6 +364,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		//s
 	}
 
+	clearSessionCookies(w)
+
 	// Créer un message de notification
 	notification = append(notification, "Déconnexion réussie.")
 
@@ -407,7 +409,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		isadmin = adminCookie.Value
 	}
 
-	if isadmin == "admin" {
+	if isadmin == "admin" || isadmin == "modo"{
 			admin = true
 		} else {
 			admin = false 
@@ -416,11 +418,8 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 
 	var discussions []Discussion
-	var category string
-	/* category = "some_value" */
-	
 
-	category = r.URL.Query().Get(`category`)
+	category := r.URL.Query().Get(`category`)
 
 	if category == "" {
 		// Récupérer toutes les discussions à partir de la base de données
@@ -485,18 +484,55 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	// Créer une structure de données pour passer les informations au modèle
+	var tickets []Ticket
+
+	probleme := r.URL.Query().Get(`probleme`)
+
+	if probleme == "" {
+		// Récupérer toutes les discussions à partir de la base de données
+		tickets, err = GetAllTicketsFromDB()
+		if err != nil {
+			http.Error(w, "Internal Server Error 1", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		tickets, err = GetTicketsFromDBByCategories(probleme)
+		if err != nil {
+			http.Error(w, "Internal Server Error 2" , http.StatusInternalServerError)
+			return
+		}
+	}
+
+
+	// Récupérer les catégories pour chaque discussion
+	for i, ticket := range tickets {
+		probleme, err := GetCategoryForTicketFromDB(ticket.ID)
+		if err == nil {
+			tickets[i].Probleme = probleme
+		}
+	}
+
+	// Récupérer les catégories uniques
+	problemes := GetUniqueCategoriesFromTickets(tickets)
+ 
+
+// Créer une structure de données pour passer les informations au modèle
 	data := struct {
 		Username    string
 		Admin       bool
 
 		Discussions []Discussion
 		Categories  []string
+
+		Tickets []Ticket
+		Problemes  []string
 	}{
 		Username:    username,
 		Admin:       admin,
 		Discussions: discussions,
+		Tickets: tickets,
 		Categories:  categories,
+		Problemes:  problemes,
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/home.html"))

@@ -120,7 +120,7 @@ footer {
 
 #adminbox select,
 #adminbox input[type="text"] {
-  width: 100%;
+  width: 300px;
   padding: 8px;
   margin-top: 6px;
   margin-bottom: 10px;
@@ -128,7 +128,7 @@ footer {
 }
 
 #adminbox button {
-  background-color: #4caf50;
+  background-color: #3498db;
   color: white;
   padding: 10px 15px;
   border: none;
@@ -137,5 +137,5 @@ footer {
 }
 
 #adminbox button:hover {
-  background-color: #45a049;
+  background-color: #2980b8;
 }

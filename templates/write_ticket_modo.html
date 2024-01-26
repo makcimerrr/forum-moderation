@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/static/css/write_discussion.css" />
+    <link rel="stylesheet" href="/static/css/errormessage.css" />
+    <link rel="stylesheet" href="/static/css/sign_up.css" />
+
+    <title>Créer une demande role</title>
+</head>
+
+<body>
+    <h1>Write a Ticket</h1>
+    <form action="/create_ticket" method="post" enctype="multipart/form-data">
+        <div class="container">
+            <label for="sujet">Title:</label>
+            <input type="text" id="sujet" name="sujet" required /><br />
+
+            <label for="message">Motivation et présentation:</label>
+            <textarea id="message" name="message" required></textarea><br />
+
+            <label for="probleme">Demande:</label>
+            <select id="probleme" name="probleme">
+                <option value="Ask role Moderator">Ask role Moderator</option>
+                <option value="Ask role Administrator">Ask role Administrator</option>
+            </select>
+
+            <div class="back-to-home">
+                <a href="/">Back to Home</a>
+            </div>
+
+            <!-- ... other form fields ... -->
+
+            <input type="file" id="file-input" name="file" accept=".jpeg, .png, .gif" />
+            <br />
+            <input type="submit" value="Create Report" />
+    </form>
+
+    {{ if .FormErrors }}
+    <div class="error-message">
+        <ul>
+            {{ range .FormErrors }}
+            <li>{{ . }}</li>
+            {{ end }}
+        </ul>
+    </div>
+    {{ end }}
+    </div>
+</body>
+
+</html>
