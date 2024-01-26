@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/static/css/home.css">
+    <!--<link rel="stylesheet" href="/static/css/admin.css">-->
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forum</title>
@@ -11,7 +12,7 @@
 
 <body>
     <header>
-        <a href="/">Forum</a>
+        <a href="/backtohome">Forum</a>
         {{if .Username}}
         <a>Welcome {{.Username}}</a>
         <a href="/logout">Logout</a>
@@ -23,10 +24,14 @@
     </header>
 
     <main>
-        
+
         <h1>Discussions</h1>
 
         <a href="/create_discussion" class="boutonaddpost">Add a Post </a> <!-- Bouton pour écrire une discussion -->
+
+        <a href="/create_ticket" class="boutoncreateticket">Create Ticket </a>
+        <!-- Bouton pour demander un ticket admin -->
+
 
         <form action="/home" method="GET">
             <label for="category">Category:</label>
@@ -39,23 +44,29 @@
             </select><br>
             <input type="submit" value="Filter">
         </form>
-        {{ if .Admin }}
-        <form action="/DeleteItem" method="post">
-            <label for="itemType">Select item type to delete:</label>
-            <select id="itemType" name="itemType">
-                <option value="post">Post</option>
-                <option value="comment">Comment</option>
-                <option value="filter">Filter</option>
-            </select><br>
-        
-            <label for="itemID">ID of the item to delete:</label>
-            <input type="text" id="itemID" name="itemID"><br>
-        
-            <!-- Bouton de validation -->
-            <button type="submit">Valider</button>
-        </form>
+
+
+        <div id="adminbox">
+            {{ if .Admin }}
+            <form action="/DeleteItem" method="post">
+                <label for="itemType">Select item type to delete:</label>
+                <select id="itemType" name="itemType">
+                    <option value="post">Post</option>
+                    <option value="comment">Comment</option>
+                    <option value="filter">Filter</option>
+                </select><br>
+
+                <label for="itemID">ID of the item to delete:</label><br>
+                <input type="text" id="itemID" name="itemID"><br>
+
+                <!-- Bouton de validation -->
+                <button type="submit">Valider</button>
+            </form>
+        </div>
+
+
         <div class="discussion-list">
-           
+
             <!-- Boucle pour afficher les discussions avec des liens -->
 
             {{range .Discussions}}
@@ -67,7 +78,6 @@
 
                     <p><strong>Titre :</strong> {{.Title}}</p>
                     <p><strong>Catégorie :</strong> {{.Category}}</p>
-    
             </a>
             <!-- Ajoutez un formulaire pour la case à cocher -->
             <form action="/like/{{.ID}}" method="post">
@@ -83,10 +93,10 @@
             </form>
         </div>
         {{end}}
-    {{ else }}
+        {{ else }}
 
         <div class="discussion-list">
-           
+
             <!-- Boucle pour afficher les discussions avec des liens -->
 
             {{range .Discussions}}
@@ -98,7 +108,7 @@
 
 
 
-                    
+
             </a>
             <!-- Ajoutez un formulaire pour la case à cocher -->
             <form action="/like/{{.ID}}" method="post">
@@ -114,9 +124,9 @@
             </form>
         </div>
         {{end}}
-{{end}}
+        {{end}}
 
-       
+
     </main>
 </body>
 

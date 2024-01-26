@@ -10,9 +10,9 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
 
 	_ "modernc.org/sqlite"
 )
@@ -583,4 +583,9 @@ func deleteFilterFromDB(filterID string) error {
 
     // Si tout s'est bien passé, retourner nil (pas d'erreur)
     return nil
+}
+
+func BackToHome(w http.ResponseWriter, r *http.Request) {
+	// Rediriger vers la page home.html
+	http.Redirect(w, r, "/home.html", http.StatusSeeOther)
 }

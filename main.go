@@ -4,18 +4,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"text/template"
+	"sync"
+	"time"
 
 	"forum/facebook"
 	"forum/forum"
 	"forum/github"
 
-	"github.com/gorilla/pat"
-	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/google"
+)
+
+var (
+	requestsMap = make(map[string]int)
+	lastReset   = time.Now() // Stocke le temps de la dernière réinitialisation
+	mutex       = &sync.Mutex{}
+	lastPage     = ""         // Stocke l'URL de la dernière page accédée
 )
 
 func init() {
@@ -26,48 +29,64 @@ func init() {
 }
 
 func main() {
-	key := "Secret-session-key" // Replace with your SESSION_SECRET or similar
-	maxAge := 86400 * 30        // 30 days
-	isProd := false             // Set to true when serving over https
-
-	store := sessions.NewCookieStore([]byte(key))
-	store.MaxAge(maxAge)
-	store.Options.Path = "/"
-	store.Options.HttpOnly = true // HttpOnly should always be enabled
-	store.Options.Secure = isProd
-
-	gothic.Store = store
-
-	goth.UseProviders(
-		google.New("our-google-client-id", "our-google-client-secret", "http://localhost:3000/auth/google/callback", "email", "profile"),
-	)
-
-	p := pat.New()
-	p.Get("/auth/{provider}/callback", func(res http.ResponseWriter, req *http.Request) {
-		user, err := gothic.CompleteUserAuth(res, req)
-		if err != nil {
-			fmt.Fprintln(res, err)
-			return
-		}
-		t, _ := template.ParseFiles("templates/success.html")
-		t.Execute(res, user)
-	})
-
-	p.Get("/auth/{provider}", func(res http.ResponseWriter, req *http.Request) {
-		gothic.BeginAuthHandler(res, req)
-	})
-
-	p.Get("/", func(res http.ResponseWriter, req *http.Request) {
-		t, _ := template.ParseFiles("templates/index.html")
-		t.Execute(res, false)
-	})
-
 	if err := godotenv.Load("data.env"); err != nil {
 		log.Fatal("Error loading .env file:", err)
 	}
 
+	// Middleware pour le rate limiting
+	rateLimitMiddleware := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			// Vérifiez si une minute s'est écoulée depuis la dernière réinitialisation
+		if time.Since(lastReset) > time.Minute {
+			// Si oui, réinitialisez le compteur de requêtes
+			mutex.Lock()
+			requestsMap = make(map[string]int)
+			lastReset = time.Now()
+			mutex.Unlock()
+			
+		}
+			// Vérifiez si l'adresse demandée est "/static/" et bloquez la requête si c'est le cas
+		if r.URL.Path == "/static/" {
+			
+			log.Printf("Rate limit for acces to /static/")
+			http.Error(w, "Access to /static/ is not allowed", http.StatusForbidden)
+			return
+		}
+
+		// Vérifiez si l'URL change (changement de page)
+		if r.URL.Path != lastPage {
+			// Si oui, réinitialisez le compteur de requêtes
+			mutex.Lock()
+			requestsMap = make(map[string]int)
+			lastPage = r.URL.Path
+			lastReset = time.Now()
+			mutex.Unlock()
+		}
+
+			// Utilisez l'adresse IP de l'utilisateur comme clé de suivi
+			key := r.RemoteAddr
+
+			// Verrouillez la carte pour éviter les accès concurrents
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			// Incrémente le compteur de requêtes pour l'adresse IP actuelle
+			requestsMap[key]++
+
+			// Si le nombre de requêtes dépasse une limite définie, renvoyer une réponse d'erreur
+			if requestsMap[key] > 3 { // Par exemple, limitez à 10 requêtes par minute
+				log.Printf("Rate limit exceeded for %s. Requests: %d", key, requestsMap[key])
+				http.Error(w, "Rate limit exceeded. Wait 1 minute.", http.StatusTooManyRequests)
+				return
+			}
+
+			// Laissez passer la requête vers le gestionnaire suivant
+			next(w, r)
+		}
+	}
+
 	// Login route
-	http.HandleFunc("/login/github/", github.GithubLoginHandler)
+	http.HandleFunc("/login/github/", rateLimitMiddleware(github.GithubLoginHandler))
 
 	// Github callback
 	http.HandleFunc("/login/github/callback", github.GithubCallbackHandler)
@@ -81,6 +100,7 @@ func main() {
 	http.HandleFunc("/oauth2callback", facebook.HandleFacebookCallback)
 
 	http.HandleFunc("/", forum.Home)
+	http.HandleFunc("/backtohome", forum.BackToHome)
 	http.HandleFunc("/404", forum.HandleNotFound)
 	http.HandleFunc("/500", forum.HandleServerError)
 	http.HandleFunc("/400", forum.HandleBadRequest)
