@@ -59,9 +59,8 @@ func LoggedinHandler(w http.ResponseWriter, r *http.Request, githubData string) 
 		Expires: expiration,
 		Path:    "/",
 	}
-	admin := false
 	// Create and set session cookies
-	err = forum.CreateAndSetSessionCookies(w, githubUser.Login,admin)
+	err = forum.CreateAndSetSessionCookies(w, githubUser.Login)
 	if err != nil {
 		log.Panic("Error creating and setting session cookies:", err)
 	}

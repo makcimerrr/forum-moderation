@@ -720,7 +720,7 @@ func GetUniqueCategoriesFromTickets(tickets []Ticket) []string {
 	return problemes
 }
 func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
-	var formError []string
+	var successMessage []string
 	// Ouvrir la base de données SQLite
 	db, err := sql.Open("sqlite", "database/data.db")
 	if err != nil {
@@ -732,6 +732,7 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 	// Récupérer les données du formulaire
 	err = req.ParseForm()
 	if err != nil {
+		log.Printf("Erreur lors de la lecture des données du formulaire : %v", err)
 		http.Error(w, "Erreur lors de la lecture des données du formulaire", http.StatusBadRequest)
 		return
 	}
@@ -744,6 +745,7 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 
 	// Valider que l'ID est présent
 	if userID == "" {
+		log.Printf("ID de l'utilisateur manquant")
 		http.Error(w, "ID de l'utilisateur manquant", http.StatusBadRequest)
 		return
 	}
@@ -753,11 +755,11 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 	err = db.QueryRow("SELECT access_level FROM account_user WHERE id = ?", userID).Scan(&accessLevel)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Printf("Utilisateur non trouvé : %v", err)
 			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
-			formError = append(formError, "Utilisateur non trouvé")
 		} else {
+			log.Printf("Erreur lors de la récupération de l'access_level : %v", err)
 			http.Error(w, "Erreur lors de la récupération de l'access_level", http.StatusInternalServerError)
-			formError = append(formError, "Erreur lors de la récupération de l'access_level")
 		}
 		return
 	}
@@ -765,31 +767,38 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 	// Mettre à jour l'access_level en fonction de l'action
 	switch action {
 	case "promote":
-		if accessLevel == "user" || accessLevel == "NULL" {
+		if accessLevel == "admin"{
+			successMessage = append(successMessage, "L'utilisateur est déjà administrateur")
+			break
+		}else if accessLevel == "user" || accessLevel == "NULL" {
 			accessLevel = "modo"
 		} else if accessLevel == "modo" {
 			accessLevel = "admin"
 		}
+		successMessage = append(successMessage, "L'utilisateur a été promu avec succès. Rôle actuel ", accessLevel)
 	case "demote":
-		if accessLevel == "admin" {
+		if accessLevel == "user" || accessLevel == "NULL"{
+			successMessage = append(successMessage, "L'utilisateur est déjà user")
+			break
+		}else if accessLevel == "admin" {
 			accessLevel = "modo"
 		} else if accessLevel == "modo" {
 			accessLevel = "user"
 		}
+		successMessage = append(successMessage, "L'utilisateur a été rétrogradé avec succès. Rôle actuel ", accessLevel)
 	default:
 		http.Error(w, "Action invalide", http.StatusBadRequest)
-		formError = append(formError, "Action invalide")
 		return
 	}
 
 	// Mettre à jour l'access_level dans la base de données
 	_, err = db.Exec("UPDATE account_user SET access_level = ? WHERE id = ?", accessLevel, userID)
 	if err != nil {
+		log.Printf("Erreur lors de la mise à jour de l'access_level : %v", err)
 		http.Error(w, "Erreur lors de la mise à jour de l'access_level", http.StatusInternalServerError)
-		formError = append(formError, "Erreur lors de la mise à jour de l'access_level")
 		return
 	}
 
 	
-	http.Redirect(w, req, "/home?error="+url.QueryEscape(strings.Join(formError, "; ")), http.StatusSeeOther)
+	http.Redirect(w, req, "/home?error="+url.QueryEscape(strings.Join(successMessage, "; ")), http.StatusSeeOther)
 }

@@ -11,7 +11,10 @@
 </head>
 
 <body>
-    <h1>Write a Ticket</h1>
+    <h1>Write a Request</h1>
+    <div class="back-to-home">
+        <a href="/">Back to Home</a>
+    </div>
     <form action="/create_ticket" method="post" enctype="multipart/form-data">
         <div class="container">
             <label for="sujet">Title:</label>
@@ -26,15 +29,11 @@
                 <option value="Ask role Administrator">Ask role Administrator</option>
             </select>
 
-            <div class="back-to-home">
-                <a href="/">Back to Home</a>
-            </div>
-
-            <!-- ... other form fields ... -->
+            <br><br>
 
             <input type="file" id="file-input" name="file" accept=".jpeg, .png, .gif" />
             <br />
-            <input type="submit" value="Create Report" />
+            <input type="submit" value="Create a Request" />
     </form>
 
     {{ if .FormErrors }}

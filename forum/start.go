@@ -112,10 +112,12 @@ func Sign_up(w http.ResponseWriter, r *http.Request) {
 		if formError == nil {
 			insertUser := "INSERT INTO account_user (username, email, mot_de_passe, access_level) VALUES (?, ?, ?, ?)"
 			_, err = db.Exec(insertUser, username, email, hashpass,lvaccess)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
-			admin := false
-
-			err := CreateAndSetSessionCookies(w, username,admin)
+			err := CreateAndSetSessionCookies(w, username)
 
 		
 			if err != nil {
@@ -162,9 +164,7 @@ func Log_in(w http.ResponseWriter, r *http.Request) {
 		var trueemail string
 		var truepassword uint32
 		var username string
-		var admin string
-		var Admin = false
-		err = db.QueryRow("SELECT username, email, mot_de_passe ,access_level FROM account_user WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword,&admin)
+		err = db.QueryRow("SELECT username, email, mot_de_passe FROM account_user WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
 		
 		if err != nil {
 			formError = append(formError, "Email Doesn't exist.")
@@ -175,11 +175,9 @@ func Log_in(w http.ResponseWriter, r *http.Request) {
 			if hashloginpassword != truepassword {
 				formError = append(formError, "Password Failed.")
 			} else {
-				if admin == "admin" {
-					Admin = true
-				}
+
 				// L'utilisateur est connecté avec succès
-				err := CreateAndSetSessionCookies(w, username, Admin)
+				err := CreateAndSetSessionCookies(w, username)
 				if err != nil {
 					formError = append(formError, "Internal Server Error")
 					http.Redirect(w, r, "/log_in?error="+url.QueryEscape(strings.Join(formError, "; ")), http.StatusSeeOther)
@@ -225,17 +223,12 @@ func generateSessionToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(token), nil
 }
 
-func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bool) error {
+func CreateAndSetSessionCookies(w http.ResponseWriter, username string) error {
 	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
 	if username == "" {
 		return errors.New("Username is empty")
 	}
 
-	// Convertir le statut d'administrateur en une chaîne de caractères
-	accessLevel := "user"
-	if admin {
-		accessLevel = "admin"
-	}
 
 	// Ouvrir une connexion à la base de données
 	db, err := sql.Open("sqlite", "database/data.db")
@@ -255,7 +248,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		}
 
 		// Insérer la nouvelle entrée dans la base de données
-		_, err = db.Exec("INSERT INTO token_user (username, sessionToken, access_level) VALUES (?, ?, NULL)", username, sessionToken)
+		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
 		if err != nil {
 			return err
 		}
@@ -278,15 +271,6 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		}
 		http.SetCookie(w, &sessionCookie)
 
-		// Créer un cookie contenant le niveau d'accès
-		accessLevelCookie := http.Cookie{
-			Name:     "access_level",
-			Value:    accessLevel,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &accessLevelCookie)
-
 	} else if err == nil {
 		// Si l'utilisateur a déjà une entrée, mettre à jour le jeton de session existant
 		sessionToken, err := generateSessionToken()
@@ -295,7 +279,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		}
 
 		// Mettre à jour le jeton de session et le niveau d'accès dans la base de données
-		_, err = db.Exec("UPDATE token_user SET sessionToken = ?, access_level = ? WHERE username = ?", sessionToken, accessLevel, username)
+		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
 		if err != nil {
 			return err
 		}
@@ -319,14 +303,6 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string, admin bo
 		http.SetCookie(w, &sessionCookie)
 
 
-		// Créer un cookie contenant le niveau d'accès
-		accessLevelCookie := http.Cookie{
-			Name:     "access_level",
-			Value:    accessLevel,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &accessLevelCookie)
 
 	} else {
 		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
@@ -356,13 +332,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		//s
 	}
 
-	// Supprimer le cookie "session"
-	access_level, err := r.Cookie("acces_level")
-	if err == nil {
-		access_level.Expires = time.Now().AddDate(0, 0, -1) // Définir une date d'expiration dans le passé pour supprimer le cookie
-		http.SetCookie(w, sessionCookie)
-		//s
-	}
 
 	clearSessionCookies(w)
 
@@ -393,30 +362,28 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	var username string
 	// Récupérer le nom d'utilisateur à partir du cookie "username"
 	usernameCookie, err := r.Cookie("username")
-
-	if err != nil {
+	if err!=nil{
 		fmt.Println(err)
 	}else {
 		username = usernameCookie.Value
-	} 
+	}
 	
-	var admin bool
-	var isadmin string
-
-	adminCookie, err := r.Cookie("access_level")
-
+	
+	var staff bool
+	
+	isStaff, err := getAccessLevelByUsername(username)
 	if err != nil {
 		fmt.Println(err)
-	}else {
-		isadmin = adminCookie.Value
 	}
 
-	if isadmin == "admin" || isadmin == "modo"{
-			admin = true
+	fmt.Println(isStaff)
+
+
+	if isStaff == "admin" || isStaff == "modo" {
+			staff = true
 		} else {
-			admin = false 
-	
-		}
+			staff = false 
+	}
 
 
 	var discussions []Discussion
@@ -521,7 +488,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 // Créer une structure de données pour passer les informations au modèle
 	data := struct {
 		Username    string
-		Admin       bool
+		Staff       bool
 
 		Discussions []Discussion
 		Categories  []string
@@ -531,7 +498,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		Error string
 	}{
 		Username:    username,
-		Admin:       admin,
+		Staff:       staff,
 		Discussions: discussions,
 		Tickets: tickets,
 		Categories:  categories,
@@ -649,4 +616,24 @@ func deleteFilterFromDB(filterID string) error {
 func BackToHome(w http.ResponseWriter, r *http.Request) {
 	// Rediriger vers la page home.html
 	http.Redirect(w, r, "/home.html", http.StatusSeeOther)
+}
+
+func getAccessLevelByUsername(username string) (string, error) {
+    var accessLevel string
+
+    // Ouvrir la base de données SQLite
+    db, err := sql.Open("sqlite", "database/data.db")
+    if err != nil {
+        return "", err
+    }
+    defer db.Close()
+
+
+    // Exécuter la requête SQL
+    err = db.QueryRow("SELECT COALESCE(access_level, 'user') FROM account_user WHERE username = ?", username).Scan(&accessLevel)
+    if err != nil {
+        return "", err
+    }
+
+    return accessLevel, nil
 }

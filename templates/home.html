@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/static/css/home.css">
+    <link rel="stylesheet" href="/static/css/errormessage.css">
+
     <!--<link rel="stylesheet" href="/static/css/admin.css">-->
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +31,7 @@
 
         <a href="/create_discussion" class="boutonaddpost">Add a Post </a> <!-- Bouton pour écrire une discussion -->
 
-        <a href="/create_ticket_modo" class="boutoncreateticket">You want to be Moderator ?</a>
+        <a href="/create_ticket_modo" class="boutoncreateticket">You want to be Staff ?</a>
 
 
 
@@ -47,7 +49,7 @@
 
 
         <div id="adminbox">
-            {{ if .Admin }}
+            {{ if .Staff }}
             <a href="/create_ticket" class="boutoncreateticket">Create Ticket </a>
             <!-- Bouton pour demander un ticket admin -->
             <form action="/DeleteItem" method="post">

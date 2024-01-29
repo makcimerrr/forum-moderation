@@ -79,9 +79,8 @@ func HandleFacebookCallback(w http.ResponseWriter, r *http.Request) {
 		Expires: expiration,
 		Path:    "/",
 	}
-	admin := false
 	// Create and set session cookies
-	err = forum.CreateAndSetSessionCookies(w, facebookUser.Name,admin)
+	err = forum.CreateAndSetSessionCookies(w, facebookUser.Name)
 	if err != nil {
 		log.Panic("Error creating and setting session cookies:", err)
 	}

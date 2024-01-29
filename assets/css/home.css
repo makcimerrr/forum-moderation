@@ -119,6 +119,7 @@ footer {
 }
 
 #adminbox select,
+#adminbox p,
 #adminbox input[type="text"] {
   width: 300px;
   padding: 8px;
