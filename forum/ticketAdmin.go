@@ -720,6 +720,7 @@ func GetUniqueCategoriesFromTickets(tickets []Ticket) []string {
 	return problemes
 }
 func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
+	var formError []string
 	// Ouvrir la base de données SQLite
 	db, err := sql.Open("sqlite", "database/data.db")
 	if err != nil {
@@ -753,8 +754,10 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
+			formError = append(formError, "Utilisateur non trouvé")
 		} else {
 			http.Error(w, "Erreur lors de la récupération de l'access_level", http.StatusInternalServerError)
+			formError = append(formError, "Erreur lors de la récupération de l'access_level")
 		}
 		return
 	}
@@ -775,6 +778,7 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 		}
 	default:
 		http.Error(w, "Action invalide", http.StatusBadRequest)
+		formError = append(formError, "Action invalide")
 		return
 	}
 
@@ -782,25 +786,10 @@ func PromoteOrDemote(w http.ResponseWriter, req *http.Request) {
 	_, err = db.Exec("UPDATE account_user SET access_level = ? WHERE id = ?", accessLevel, userID)
 	if err != nil {
 		http.Error(w, "Erreur lors de la mise à jour de l'access_level", http.StatusInternalServerError)
+		formError = append(formError, "Erreur lors de la mise à jour de l'access_level")
 		return
 	}
 
-
-	formError := []string{"Internal Server Error"} // Exemple, remplacez cela avec vos erreurs réelles
-
-data := struct {
-	Error  string
-	Errors []string
-}{
-	Error:  "Error message", // Remplacez cela avec le message d'erreur réel
-	Errors: formError,
-}
-
-// Rediriger avec les messages d'erreur
-http.Redirect(w, r, "/home?error="+url.QueryEscape(strings.Join(formError, "; ")), http.StatusSeeOther)
-
-
-	// Rediriger ou afficher un message de succès
-	http.Redirect(w, req, "/home", http.StatusFound)
-	tmpl.Execute(w, data)
+	
+	http.Redirect(w, req, "/home?error="+url.QueryEscape(strings.Join(formError, "; ")), http.StatusSeeOther)
 }

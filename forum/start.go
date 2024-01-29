@@ -373,6 +373,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
+	
+	errMessage := r.URL.Query().Get("error") // Récupérez le message d'erreur de la requête
 
 	if r.URL.Path != "/home" && r.URL.Path != "/" {
 		codeerreur.CodeErreur(w, r, 404, "Page not found")
@@ -526,6 +528,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 		Tickets []Ticket
 		Problemes  []string
+		Error string
 	}{
 		Username:    username,
 		Admin:       admin,
@@ -533,6 +536,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		Tickets: tickets,
 		Categories:  categories,
 		Problemes:  problemes,
+		Error: errMessage,
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/home.html"))

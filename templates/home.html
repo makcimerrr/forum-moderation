@@ -77,6 +77,10 @@
 
                 <!-- Bouton de validation -->
                 <button type="submit">Valider</button>
+
+                {{if .Error}}
+                <p class="error-message">{{.Error}}</p>
+                {{end}}
             </form>
 
             <br><br>
