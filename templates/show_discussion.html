@@ -17,10 +17,13 @@
     <p id="filter"><strong>Categories :</strong> {{ .Filter}}</p>
 
     <!-- discussion.html -->
+    {{ if .Admin }}
+
     <div id="messages">
       <!-- Les messages seront affichés ici -->
       {{range .Comments}}
       <div class="message">
+            
         <p>{{ .ID}}</p>
         <p><strong>{{.Username}}</strong></p>
         <p>{{.Message}}</p>
@@ -32,6 +35,25 @@
         </form>
       </div>
       {{end}}
+      {{else}}
+
+      <div id="messages">
+        <!-- Les messages seront affichés ici -->
+        {{range .Comments}}
+        <div class="message">
+              
+          <p><strong>{{.Username}}</strong></p>
+          <p>{{.Message}}</p>
+  
+          <!-- Bouton like pour aimer les commentaires -->
+          <form action="" method="post">
+            <input type="checkbox" name="like" value="" disabled />
+            <input type="submit" value="Like" />
+          </form>
+        </div>
+        {{end}}
+        {{end}}
+
     </div>
 
     <h2>Add a Comment</h2>

@@ -28,13 +28,13 @@
 
         <a href="/create_discussion" class="boutonaddpost">Add a Post </a> <!-- Bouton pour écrire une discussion -->
 
-        <form action="/home" method="GET">
+        <form action="" method="GET">
             <label for="category">Category:</label>
             <select id="category" name="category">
                 <option value="">All Categories</option>
-                <option value="sport">Sport</option>
-                <option value="cuisine">Cuisine</option>
-                <option value="voyage">Voyage</option>
+                {{range .Discussions}}
+                <option value="{{.Category}}">{{.Category}}</option>
+            {{end}}
                 <!-- Ajoutez d'autres options de catégorie ici -->
             </select><br>
             <input type="submit" value="Filter">
@@ -45,7 +45,9 @@
             <select id="itemType" name="itemType">
                 <option value="post">Post</option>
                 <option value="comment">Comment</option>
-                <option value="filter">Filter</option>
+                <option value="filterDelete">Filter + Post + Comment</option>
+                <option value="filterCreate">Create a Filter</option>
+
             </select><br>
         
             <label for="itemID">ID of the item to delete:</label>

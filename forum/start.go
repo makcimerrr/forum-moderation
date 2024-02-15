@@ -469,6 +469,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		Username    string
 		Admin       bool
 
+
 		Discussions []Discussion
 		Categories  []string
 	}{
@@ -489,9 +490,15 @@ func Home(w http.ResponseWriter, r *http.Request) {
 func DeleteItem(w http.ResponseWriter, r *http.Request) {
     postIDStr := r.FormValue("itemID")
     itemType := r.FormValue("itemType")
-	fmt.Println(itemType)
 
-    if itemType == "filter" {
+
+	if itemType == "filterCreate" {
+		
+	
+	
+	}
+
+    if itemType == "filterDelete" {
         err := deleteFilterFromDB(postIDStr)
         if err != nil {
             http.Error(w, "Error deleting filter", http.StatusInternalServerError)
@@ -502,7 +509,7 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 	
 
     postID, err := strconv.Atoi(postIDStr)
-	fmt.Println(postID)
+	
 
     if err != nil {
         http.Error(w, "Invalid post ID", http.StatusBadRequest)
@@ -510,7 +517,6 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
     }
 
      if itemType == "post" {
-		fmt.Println(postID)
         err = deletePostFromDB(postID)
         if err != nil {
             http.Error(w, "Error deleting post", http.StatusInternalServerError)
@@ -584,3 +590,5 @@ func deleteFilterFromDB(filterID string) error {
     // Si tout s'est bien passé, retourner nil (pas d'erreur)
     return nil
 }
+
+

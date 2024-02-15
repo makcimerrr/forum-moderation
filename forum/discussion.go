@@ -12,14 +12,54 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
 )
 
 func CreateDiscussion(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var category string
+	var discussions []Discussion
+
+	category = r.URL.Query().Get(`category`)
+
+	if category == "" {
+		// Récupérer toutes les discussions à partir de la base de données
+		discussions, err = GetAllDiscussionsFromDB()
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		discussions, err = GetDiscussionsFromDBByCategories(category)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+
+	// Récupérer les catégories pour chaque discussion
+	for i, discussion := range discussions {
+		category, err := GetCategoryForDiscussionFromDB(discussion.ID)
+		if err == nil {
+			discussions[i].Category = category
+		}
+	}
+
+	// Récupérer les catégories uniques
+	categories := GetUniqueCategoriesFromDiscussions(discussions)
+
+	
 
 
 	data := struct {
+		Categories  []string
+		Discussions []Discussion
 		FormErrors []string
 	}{
+		Categories:  categories,
+		Discussions: discussions,
+
 		FormErrors: nil, // Initialisez-le à nil ou avec des valeurs par défaut si nécessaire
 	}
 
@@ -169,6 +209,19 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Discussion not found", http.StatusNotFound)
 		return
 	}
+	admin := false
+
+	adminCookie, err := r.Cookie("access_level")
+	if err == nil {
+ 	   adminStr := adminCookie.Value
+ 	   admin, _ = strconv.ParseBool(adminStr)
+		if adminStr == "admin" {
+			admin = true
+		} else {
+			admin = false 
+	
+		}
+	}
 
 	// Effectuez une autre requête SQL pour récupérer les commentaires associés à cette discussion
 	rows, err := db.Query("SELECT id, username, message FROM comments WHERE discussion_id = ?", discussionIDInt)
@@ -189,6 +242,7 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 		Message  string
 		Image    string
 		Filter   *string
+		Admin bool
 		Comments []struct {
 			ID int
 			Username string
@@ -200,6 +254,7 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 		Image:    base64.StdEncoding.EncodeToString(imageData),
 		ID:       discussionIDInt,
 		Message:  message,
+		Admin:    admin,
 	}
 
 	var filter sql.NullString
@@ -223,7 +278,6 @@ func ShowDiscussion(w http.ResponseWriter, r *http.Request) {
 			Username string
 			Message  string
 		}
-		fmt.Println(comment.ID)
 
 		if err := rows.Scan(&comment.ID, &comment.Username, &comment.Message); err != nil {
 			http.Error(w, "Error scanning comments", http.StatusInternalServerError)
@@ -393,3 +447,4 @@ func GetUniqueCategoriesFromDiscussions(discussions []Discussion) []string {
 
 	return categories
 }
+

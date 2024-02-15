@@ -16,6 +16,7 @@
       method="post"
       enctype="multipart/form-data"
     >
+    
       <div class="container">
       <label for="title">Title:</label>
       <input type="text" id="title" name="title" required /><br />
@@ -23,13 +24,15 @@
       <label for="message">Message:</label>
       <textarea id="message" name="message" required></textarea><br />
 
-      <label for="category">Category:</label>
-      <select id="category" name="category">
-        <option value="sport">Sport</option>
-        <option value="cuisine">Cuisine</option>
-        <option value="voyage">Voyage</option>
-        <!-- Ajoutez d'autres options de catégorie ici -->
-      </select>
+      <form action="/GetAllFilters" method="GET">
+        <label for="category">Category:</label>
+        <select id="category" name="category">
+            <option value="">All Categories</option>
+            {{range .Discussions}}
+            <option value="{{.Category}}">{{.Category}}</option>
+        {{end}}
+            <!-- Ajoutez d'autres options de catégorie ici -->
+    </form>
 
       <div class="back-to-home">
         <a href="/">Back to Home</a>
@@ -46,6 +49,9 @@
       <br />
       <input type="submit" value="Create Discussion" />
     </form>
+ 
+
+    
 
       {{ if .FormErrors }}
       <div class="error-message">
